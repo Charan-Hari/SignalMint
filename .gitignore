@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+build/
+dist/
+.eggs/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Data + model artifacts (large / downloaded)
+data/**
+!data/.gitkeep
+*.pth
+*.pt
+*.ckpt
+*.npz
+*.bin
+
+# C runtime build output
+runtime/build/
+artifacts/
+runtime/model_data.h
+runtime/sm_infer.exe
+runtime/*.obj
+*.o
+*.obj
+*.exe
+*.out
+
+# Notebooks
+.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Secrets / local environment (never commit)
+.env
+.env.*
+*.local
+secrets.*
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+serviceAccount*.json
+*firebase*.json
+*.credentials
