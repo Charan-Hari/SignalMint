@@ -1,0 +1,9 @@
+file,label,type,sample_rate,description
+01_normal_1797rpm.csv,0,normal,12000,"Healthy bearing, 1797 rpm"
+02_normal_1730rpm.csv,0,normal,12000,"Healthy bearing, 1730 rpm"
+03_normal_lightload.csv,0,normal,12000,"Healthy bearing, light load"
+04_inner_race_fault.csv,1,inner_race,12000,Inner-race defect
+05_ball_fault.csv,1,ball,12000,Rolling-element (ball) defect
+06_outer_race_fault.csv,1,outer_race,12000,Outer-race defect
+07_early_stage_fault.csv,1,incipient,12000,Early-stage / subtle inner-race defect
+08_severe_fault.csv,1,severe,12000,Advanced / severe outer-race defect

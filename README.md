@@ -1,104 +1,176 @@
-# SignalMint
+<h1 align="center">SignalMint</h1>
 
-> Learn normal. Compress better. Detect earlier. Run anywhere.
+<p align="center">
+  <b>One tiny INT8 model. Two products.</b><br/>
+  Label-free <b>anomaly detection</b> and neural <b>compression</b> for 1-D edge signals —
+  small enough for a microcontroller.
+</p>
 
-**Tiny, explicit-likelihood generative models for 1-D edge signals** (vibration,
-audio, current, telemetry). One trained model delivers two products at once:
+<p align="center">
+  <a href="https://github.com/Charan-Hari/SignalMint/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Charan-Hari/SignalMint/actions/workflows/ci.yml/badge.svg" /></a>
+  <img alt="Python" src="https://img.shields.io/badge/python-3.11%2B-blue.svg" />
+  <img alt="Built with PyTorch" src="https://img.shields.io/badge/built%20with-PyTorch-ee4c2c.svg" />
+  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg" />
+</p>
 
-1. **Label-free anomaly detection** — the model outputs a probability for every
-   sample it sees. Anything it finds improbable is an anomaly. No labeled failure
-   data required (that is the problem the predictive-maintenance market is stuck on).
-2. **Neural compression** — the same per-sample probabilities feed an entropy
-   coder. "Predict the next sample well" is mathematically identical to "send
-   fewer bits", so the model doubles as a codec for bandwidth-constrained links.
+<p align="center"><i>Learn normal · Compress better · Detect earlier · Run anywhere</i></p>
 
-Both capabilities come from the **same** autoregressive model. That is the whole
-thesis: an explicit-likelihood model is simultaneously a detector and a compressor.
+<p align="center">
+  <img src="docs/demo.gif" alt="SignalMint detecting a bearing fault in real time" width="640" />
+</p>
 
-## Why this and not "tiny image generation"
+<p align="center">
+  A healthy vibration signal streams by with a live anomaly score. When the bearing
+  develops a fault, the score jumps over the threshold — <b>with no labeled failure data</b>.
+</p>
 
-Image generation on tiny hardware is a demo category — nobody buys a 32x32 art
-generator. But *generative modeling of signals* has non-art uses where being small
-is a genuine requirement. See [docs/thesis.md](docs/thesis.md) for the full
-positioning, target market, and success metrics.
+---
 
-## Target tier
+## Why SignalMint
 
-| Parameter        | Choice                                                     |
-| ---------------- | ---------------------------------------------------------- |
-| Memory / RAM     | 1-8 MB (not 264 KB, not 1 GB)                              |
-| Power            | sub-100 mW active                                          |
-| Precision        | INT8 weights/activations, quantization-aware training      |
-| Modality         | 1-D signals first (vibration/audio/telemetry)             |
-| Deployment       | software-only on dev boards first; silicon co-design later |
-| Primary dataset  | CWRU bearing vibration (labeled normal/fault)             |
+An autoregressive model outputs an explicit **probability for every sample** it sees.
+That single property yields two products from the **same** trained model:
 
-## Architecture: one model, three heads
+- **🔍 Label-free anomaly detection** — improbable samples (high negative log-likelihood)
+  are anomalies. No labeled failure data required, which is exactly what the
+  predictive-maintenance market is stuck on.
+- **🗜️ Neural compression** — the same probabilities drive an entropy coder.
+  "Predict the next sample well" is mathematically identical to "send fewer bits",
+  so the model doubles as a codec for bandwidth-constrained links.
+
+See [docs/thesis.md](docs/thesis.md) for the full positioning and target market.
+
+## Table of contents
+- [Results](#results)
+- [Quickstart (30 seconds)](#quickstart-30-seconds)
+- [How it works](#how-it-works)
+- [Full pipeline](#full-pipeline)
+- [Project structure](#project-structure)
+- [Target tier](#target-tier)
+- [Status](#status)
+
+## Results
+
+On real **CWRU bearing-vibration** data — an 8-layer WaveNet-lite (64 bins,
+~68 K INT8 params), trained on healthy data only. Full numbers in
+[docs/BENCHMARKS.md](docs/BENCHMARKS.md).
+
+| Capability | SignalMint | Baseline |
+| --- | --- | --- |
+| **Anomaly** — ROC AUC / detection @1% FA | **1.000 / 1.000** | autoencoder 1.000 / 1.000 |
+| **Compression** — bits/sample | **2.89** | gzip 4.73 · order-0 5.34 · uniform 6.00 |
+| **Edge footprint** | **110 KB ROM · 33 KB RAM** · 65 K MACs/sample | — |
+| **INT8 C-runtime parity** | **bit-exact** (max abs diff 0) | — |
+
+- **1.64× smaller than gzip** and 2.07× smaller than a fixed-width code — with an **exact round-trip** (~52% fewer bytes on the wire).
+- The **same model** flags anomalies with **no labeled failures**.
+- Fits cheap MCUs with **length-independent** streaming RAM and no cloud dependency.
+
+## Quickstart (30 seconds)
+
+No dataset download, no pretrained checkpoint — 8 sample signals ship in
+[`samples/`](samples/).
+
+```bash
+python -m venv .venv && source .venv/bin/activate   # Windows: .\.venv\Scripts\Activate.ps1
+pip install -e ".[train,dev]"
+
+python scripts/try_samples.py
+```
+
+You'll get a table like:
+
+```
+sample                    type           score     verdict   bits/sample
+--------------------------------------------------------------------------
+01_normal_1797rpm         normal         2.925      normal      4.22 b/s
+04_inner_race_fault       inner_race     3.169     ANOMALY      4.57 b/s
+05_ball_fault             ball           3.238     ANOMALY      4.67 b/s
+06_outer_race_fault       outer_race     3.141     ANOMALY      4.53 b/s
+08_severe_fault           severe         3.287     ANOMALY      4.74 b/s
+```
+
+It trains a tiny model on the **healthy** samples only, then scores every signal
+for anomaly and reports its compression rate. See [samples/README.md](samples/README.md).
+
+Prefer a notebook? Open [notebooks/demo.ipynb](notebooks/demo.ipynb).
+
+## How it works
+
+One streaming, **causal** model feeds three heads. Because it is causal, the exact
+same computation runs as a bounded-memory streaming pass on a microcontroller.
 
 ```
    Raw 1-D signal
         |
-  [ framing + quantization to N bins ]      (mu-law / learned bins, INT8-friendly)
+  [ framing + mu-law quantization to N bins ]     (INT8-friendly)
         |
-  [ streaming causal model ]                (dilated causal convs, WaveNet-lite, INT8)
+  [ WaveNet-lite: dilated causal convs, INT8 ]
         |  P(next sample | past)
-        +----------------+-----------------+
-   Likelihood        Entropy coder      Sampler
-   (NLL score)       (arithmetic/rANS)  (optional)
-        |                |                  |
+        +----------------+------------------+
+   Likelihood        Entropy coder       Sampler
+   (NLL score)       (arithmetic)        (optional)
+        |                 |                  |
    ANOMALY score    COMPRESSED bits    synthetic / infill
 ```
 
-## Project phases (all complete)
+The INT8 model is exported to a dependency-free **C runtime** whose integer
+arithmetic is **bit-exact** with the Python reference (verified in CI).
 
-| Phase | Goal | Status |
-| ----- | ---- | ------ |
-| 0 | Scaffold | done — `pip install -e .`, tests green |
-| 1 | Data + reference model on CWRU | done — trains, per-sample NLL reported |
-| 2 | Both product heads benchmarked | done — anomaly + compression beat baselines |
-| 3 | INT8 + portable C runtime | done — bit-exact parity C vs Python |
-| 4 | Edge deployment proof | done — ROM/RAM/latency/energy report |
-| 5 | Packaging + story | done — benchmark, docs, demo notebook |
+## Full pipeline
 
-## Results (CWRU bearing vibration)
-
-One 8-layer WaveNet-lite (64 bins, ~68 K INT8 params, 256-sample receptive field),
-trained on healthy data only. Full table in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
-
-| Capability | SignalMint | Baseline |
-| --- | --- | --- |
-| **Anomaly** ROC AUC / detection @1% FA | **1.000 / 1.000** | autoencoder 1.000 / 1.000 |
-| **Compression** bits/sample | **2.89** | gzip 4.73, order-0 5.34, uniform 6.00 |
-| **Edge footprint** | **110 KB ROM, 33 KB RAM**, 65 K MACs/sample | — |
-| **INT8 C runtime parity** | **bit-exact** (max abs diff 0) | — |
-
-- Compression is **2.07× smaller than fixed-width** and **1.64× smaller than gzip**, with an **exact round-trip** — a directly billable ~52% cut in bytes on the wire.
-- The **same model** does anomaly detection with **no labeled failures**.
-- Fits cheap MCUs with **length-independent** streaming RAM and no cloud dependency.
-
-## Install
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -e ".[train,dev]"
+```bash
+python scripts/train.py         --source cwru --epochs 12       # -> artifacts/model.pt
+python scripts/evaluate.py      --checkpoint artifacts/model.pt # anomaly + compression
+python scripts/export_c.py      --checkpoint artifacts/model.pt # -> runtime/model_data.h
+python scripts/parity.py        --checkpoint artifacts/model.pt # bit-exact C parity
+python scripts/edge_report.py   --checkpoint artifacts/model.pt # ROM/RAM/latency/energy
+python scripts/benchmark.py     --source cwru                   # everything -> docs/BENCHMARKS.md
+python scripts/make_demo_gif.py --checkpoint artifacts/model.pt # docs/demo.gif
 ```
 
-Core install (`pip install -e .`) pulls only NumPy/SciPy so the package imports on
-any machine. PyTorch is an optional `train` extra so the runtime/eval paths stay light.
+`pip install -e .` (core) pulls only NumPy/SciPy; PyTorch is the optional `train`
+extra so the eval/runtime paths stay light.
 
-## Reproduce
+## Project structure
 
-```powershell
-python scripts/train.py       --source cwru --epochs 12      # -> artifacts/model.pt
-python scripts/evaluate.py    --checkpoint artifacts/model.pt # anomaly + compression
-python scripts/export_c.py    --checkpoint artifacts/model.pt # -> runtime/model_data.h
-python scripts/parity.py      --checkpoint artifacts/model.pt # bit-exact C parity
-python scripts/edge_report.py --checkpoint artifacts/model.pt # ROM/RAM/latency/energy
-python scripts/benchmark.py   --source cwru                   # everything -> docs/BENCHMARKS.md
+```
+signalmint/        Python package
+  data/            CWRU adapter (+ synthetic fallback), framing, quantization
+  model/           WaveNet-lite dilated causal-conv model
+  anomaly/         NLL scoring, metrics, autoencoder baseline
+  compress/        arithmetic coder + neural codec + baselines
+  quantize/        INT8 export, integer reference, C parity, footprint
+runtime/           dependency-free C runtime (bit-exact with Python)
+scripts/           train / evaluate / export / parity / benchmark / try_samples
+samples/           8 ready-to-run signals (healthy + fault types)
+tests/             pytest suite (incl. INT8 C parity)
+docs/              thesis, benchmarks, edge report, landing page
+notebooks/         demo.ipynb
 ```
 
-Or run [notebooks/demo.ipynb](notebooks/demo.ipynb) for a fast synthetic-data walkthrough (no download).
+## Target tier
+
+| Parameter | Choice |
+| --- | --- |
+| Memory / RAM | 1–8 MB |
+| Power | sub-100 mW active |
+| Precision | INT8 weights/activations |
+| Modality | 1-D signals (vibration / audio / telemetry) |
+| Deployment | software on dev boards first; silicon co-design later |
+
+## Status
+
+All phases complete: scaffold → data + model → both heads → INT8 C runtime
+(bit-exact) → edge report → packaging. **54 tests** pass in CI across Python
+3.11–3.13.
+
+## Acknowledgements & disclaimer
+
+Benchmarks use the [CWRU Bearing Data Center](https://engineering.case.edu/bearingdatacenter)
+dataset (downloaded on demand). The bundled `samples/` are generated by this
+project's own synthetic generator. Results are on a curated CWRU subset; energy
+figures are modeled estimates with stated assumptions.
 
 ## License
 

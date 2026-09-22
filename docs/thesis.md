@@ -34,7 +34,7 @@ and privacy limits.
 
 | Parameter   | Choice                                   | Rationale                                  |
 | ----------- | ---------------------------------------- | ------------------------------------------ |
-| RAM         | 1-8 MB                                   | 264 KB is too tight for utility; 1 GB is already served |
+| RAM         | 1-8 MB                                   | small enough for cheap MCUs, large enough to be useful |
 | Power       | sub-100 mW active                        | physics does not get cheaper over time     |
 | Precision   | INT8, quantization-aware                  | fits the tier, matches cheap MAC hardware  |
 | Modality    | 1-D signals first                        | the paying problems and 100x cheaper compute |
