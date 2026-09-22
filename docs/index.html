@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SignalMint — tiny generative models for edge signals</title>
+<meta name="description" content="One tiny INT8 autoregressive model that does label-free anomaly detection and neural compression on 1-D signals, with a bit-exact C runtime for microcontrollers." />
+<style>
+  :root {
+    --bg: #0b1020; --panel: #141b2e; --panel2: #1b2440;
+    --ink: #e8edf7; --muted: #9aa6c0; --line: #263150;
+    --accent: #4cc9f0; --accent2: #8b5cf6; --good: #56d364; --warn: #f0b429;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: radial-gradient(1200px 600px at 70% -10%, #1a2544 0, var(--bg) 55%);
+    color: var(--ink); font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 22px; }
+  header.hero { padding: 72px 0 40px; text-align: center; }
+  .badge { display: inline-block; font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--accent); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; margin-bottom: 20px; }
+  h1 { font-size: 52px; margin: 0 0 10px; letter-spacing: -0.02em; }
+  h1 .mint { background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .tagline { font-size: 20px; color: var(--muted); margin: 0 auto 26px; max-width: 640px; }
+  .cta { display: inline-flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .btn { display: inline-block; padding: 11px 20px; border-radius: 10px; font-weight: 600; border: 1px solid var(--line); }
+  .btn.primary { background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #06101f; border: none; }
+  .btn.ghost { color: var(--ink); }
+  section { padding: 44px 0; border-top: 1px solid var(--line); }
+  h2 { font-size: 28px; margin: 0 0 8px; }
+  h2 + .lede { color: var(--muted); margin: 0 0 26px; }
+  .grid { display: grid; gap: 18px; }
+  .cols-2 { grid-template-columns: 1fr 1fr; }
+  .cols-3 { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 720px) { .cols-2, .cols-3 { grid-template-columns: 1fr; } h1 { font-size: 40px; } }
+  .card { background: linear-gradient(180deg, var(--panel), var(--panel2)); border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
+  .card h3 { margin: 0 0 8px; font-size: 18px; }
+  .card p { margin: 0; color: var(--muted); }
+  .kpi { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; }
+  .kpi small { font-size: 14px; font-weight: 600; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 15px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; }
+  tr td:first-child { font-weight: 600; }
+  .win { color: var(--good); font-weight: 700; }
+  code, pre { font-family: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace; }
+  pre { background: #0a0f1e; border: 1px solid var(--line); border-radius: 12px; padding: 16px; overflow-x: auto; color: #cdd6ee; }
+  .flow { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+  .node { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-size: 14px; }
+  .node.accent { border-color: var(--accent); color: var(--accent); }
+  .arrow { color: var(--muted); font-size: 20px; }
+  .muted { color: var(--muted); }
+  footer { padding: 40px 0 70px; text-align: center; color: var(--muted); border-top: 1px solid var(--line); }
+  .note { font-size: 13px; color: var(--muted); margin-top: 14px; }
+  .bars { margin-top: 10px; }
+  .bar-row { display: grid; grid-template-columns: 150px 1fr 70px; align-items: center; gap: 10px; margin: 8px 0; }
+  .bar-track { background: #0a0f1e; border-radius: 8px; height: 22px; overflow: hidden; border: 1px solid var(--line); }
+  .bar-fill { height: 100%; border-radius: 8px 0 0 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="badge">TinyML · Edge AI · Signal Intelligence</div>
+    <h1>Signal<span class="mint">Mint</span></h1>
+    <p class="tagline">One tiny INT8 model. Two products. <br/>Label-free <b>anomaly detection</b> and neural <b>compression</b> for 1-D edge signals — small enough for a microcontroller.</p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/Charan-Hari/SignalMint">View on GitHub</a>
+      <a class="btn ghost" href="#results">See results</a>
+      <a class="btn ghost" href="#how">How it works</a>
+    </div>
+    <p class="note">Learn normal · Compress better · Detect earlier · Run anywhere</p>
+  </header>
+
+  <section id="thesis">
+    <h2>The core idea</h2>
+    <p class="lede">An autoregressive model outputs a probability for every sample it sees. That single property gives two products from one trained model.</p>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>🔍 Label-free anomaly detection</h3>
+        <p>Samples the model finds improbable (high negative log-likelihood) are anomalies — with <b>no labeled failure data</b>, which is exactly what the predictive-maintenance market is stuck on.</p>
+      </div>
+      <div class="card">
+        <h3>🗜️ Neural compression</h3>
+        <p>The same per-sample probabilities drive an arithmetic coder. “Predict the next sample well” is mathematically identical to “send fewer bits” — a directly billable saving on the wire.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="results">
+    <h2>Results on real data</h2>
+    <p class="lede">Trained on healthy CWRU bearing-vibration data only — an 8-layer WaveNet-lite, 64 bins, ~68K INT8 parameters.</p>
+
+    <div class="grid cols-3">
+      <div class="card"><div class="kpi">1.000 <small>ROC AUC</small></div><p>Anomaly detection, 100% detection at 1% false-alarm</p></div>
+      <div class="card"><div class="kpi">1.64× <small>vs gzip</small></div><p>Compression: 2.89 bits/sample, exact round-trip</p></div>
+      <div class="card"><div class="kpi">110<small>KB ROM</small></div><p>+ 33 KB RAM · bit-exact INT8 C runtime</p></div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h3>Compression — bits per sample (lower is better)</h3>
+      <div class="bars">
+        <div class="bar-row"><span>SignalMint</span><div class="bar-track"><div class="bar-fill" style="width:48%;background:linear-gradient(90deg,var(--accent),var(--accent2))"></div></div><span class="win">2.89</span></div>
+        <div class="bar-row"><span>gzip</span><div class="bar-track"><div class="bar-fill" style="width:79%;background:#42507e"></div></div><span>4.73</span></div>
+        <div class="bar-row"><span>order-0 entropy</span><div class="bar-track"><div class="bar-fill" style="width:89%;background:#42507e"></div></div><span>5.34</span></div>
+        <div class="bar-row"><span>uniform (raw)</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:#42507e"></div></div><span>6.00</span></div>
+      </div>
+      <p class="note">~52% fewer bytes on the wire than a fixed-width code — with an exact, reversible decode.</p>
+    </div>
+
+    <div class="grid cols-2" style="margin-top:18px">
+      <div class="card">
+        <h3>Anomaly detection</h3>
+        <table>
+          <tr><th>Scorer</th><th>ROC AUC</th><th>Det@1% FA</th></tr>
+          <tr><td>SignalMint (NLL)</td><td class="win">1.000</td><td class="win">1.000</td></tr>
+          <tr><td>Autoencoder baseline</td><td>1.000</td><td>1.000</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>Edge footprint (INT8 C runtime)</h3>
+        <table>
+          <tr><th>Resource</th><th>Value</th></tr>
+          <tr><td>ROM / flash</td><td>110 KB</td></tr>
+          <tr><td>Streaming RAM</td><td>33 KB <span class="muted">(length-independent)</span></td></tr>
+          <tr><td>MACs / sample</td><td>65,536</td></tr>
+          <tr><td>Python ↔ C parity</td><td class="win">bit-exact</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <h2>How it works</h2>
+    <p class="lede">One streaming, causal model feeds three heads — the same computation runs bit-for-bit on an MCU.</p>
+    <div class="card">
+      <div class="flow">
+        <span class="node">Raw 1-D signal</span><span class="arrow">→</span>
+        <span class="node">µ-law quantize</span><span class="arrow">→</span>
+        <span class="node accent">WaveNet-lite (INT8, causal)</span><span class="arrow">→</span>
+        <span class="node">P(next | past)</span>
+      </div>
+      <div class="flow" style="margin-top:14px">
+        <span class="node">Likelihood → <b>anomaly score</b></span>
+        <span class="node">Entropy coder → <b>compressed bits</b></span>
+        <span class="node">Sampler → synthetic / infill</span>
+      </div>
+    </div>
+
+    <div class="grid cols-2" style="margin-top:18px">
+      <div class="card">
+        <h3>Why it's worth money</h3>
+        <p>Fewer bytes on cellular/satellite/LoRa links, no rare failure labels needed, and it runs offline on cheap MCUs — privacy, battery life, and bandwidth savings in one model.</p>
+      </div>
+      <div class="card">
+        <h3>Reproduce it</h3>
+<pre>pip install -e ".[train,dev]"
+python scripts/train.py     --source cwru
+python scripts/evaluate.py  --checkpoint artifacts/model.pt
+python scripts/parity.py    --checkpoint artifacts/model.pt
+python scripts/benchmark.py --source cwru</pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Explore</h2>
+    <div class="grid cols-3">
+      <div class="card"><h3><a href="https://github.com/Charan-Hari/SignalMint">Source code</a></h3><p>The full package, C runtime, tests and scripts.</p></div>
+      <div class="card"><h3><a href="https://github.com/Charan-Hari/SignalMint/blob/main/docs/BENCHMARKS.md">Benchmarks</a></h3><p>Full numbers and how they're produced.</p></div>
+      <div class="card"><h3><a href="https://github.com/Charan-Hari/SignalMint/blob/main/docs/thesis.md">Thesis</a></h3><p>Positioning, target market and design choices.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <p>SignalMint · tiny generative models for edge signal compression &amp; anomaly detection · MIT licensed</p>
+    <p class="note">Results shown are on a curated CWRU subset; energy figures are modeled estimates with stated assumptions.</p>
+  </footer>
+
+</div>
+</body>
+</html>
