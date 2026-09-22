@@ -59,4 +59,3 @@ credentials.json
 serviceAccount*.json
 *firebase*.json
 *.credentials
-*zip

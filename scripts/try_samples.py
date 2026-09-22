@@ -17,7 +17,7 @@ from pathlib import Path
 import numpy as np
 
 from signalmint.anomaly.score import calibrate_threshold, frame_nll_scores
-from signalmint.compress.baselines import gzip_bits_per_sample, raw_bits_per_sample
+from signalmint.compress.baselines import raw_bits_per_sample
 from signalmint.compress.coder import encode_frames
 from signalmint.config import DataConfig, ModelConfig, SignalMintConfig, TrainConfig
 from signalmint.data.cwru import SignalRecord

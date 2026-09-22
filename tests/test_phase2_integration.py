@@ -9,7 +9,10 @@ torch = pytest.importorskip("torch")
 
 from signalmint.anomaly.baseline import autoencoder_scores, train_autoencoder  # noqa: E402
 from signalmint.anomaly.detector import evaluate_anomaly, report_from_scores  # noqa: E402
-from signalmint.compress.baselines import gzip_bits_per_sample, raw_bits_per_sample  # noqa: E402,F401
+from signalmint.compress.baselines import (  # noqa: E402,F401
+    gzip_bits_per_sample,
+    raw_bits_per_sample,
+)
 from signalmint.compress.coder import decode_frame, encode_frames  # noqa: E402
 from signalmint.config import DataConfig, ModelConfig, TrainConfig  # noqa: E402
 from signalmint.data.cwru import get_synthetic_records  # noqa: E402

@@ -162,6 +162,7 @@ def _render_md(b: dict, path: str, target_fa: float) -> None:
         f"bit-exact ({parity['compiler']}), max abs diff {parity['max_abs_diff']}"
         if parity else "compiler unavailable on this host"
     )
+    pct_saved = 100 - 100 / c["vs_uniform"]
     md = f"""# SignalMint Benchmarks
 
 Dataset: {', '.join(b['dataset'])}. Model: {b['model']['num_layers']}-layer WaveNet-lite,
@@ -196,7 +197,7 @@ Dataset: {', '.join(b['dataset'])}. Model: {b['model']['num_layers']}-layer Wave
 | Python-reference vs C parity | {parity_line} |
 
 ## Why it's worth money
-- **Compression {c['vs_uniform']:.2f}x** => roughly {100 - 100 / c['vs_uniform']:.0f}% fewer bytes on the wire,
+- **Compression {c['vs_uniform']:.2f}x** => roughly {pct_saved:.0f}% fewer bytes on the wire,
   a directly billable saving on cellular/satellite/LoRa telemetry links.
 - **Label-free anomaly detection** => no rare, expensive failure labels needed;
   the same model that compresses also flags abnormal behaviour locally.

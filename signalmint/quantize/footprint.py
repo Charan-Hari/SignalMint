@@ -66,7 +66,7 @@ def analyze_footprint(qm: QuantModel, activation_bytes: int = 4) -> Footprint:
     macs = 0
     receptive = 1
     streaming_ram = 0
-    for i, blk in enumerate(qm.blocks):
+    for blk in qm.blocks:
         rom += _conv_rom_bytes(blk.conv)
         rom += _conv_rom_bytes(blk.residual)
         rom += _conv_rom_bytes(blk.skip)

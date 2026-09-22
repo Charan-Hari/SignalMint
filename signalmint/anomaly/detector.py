@@ -9,7 +9,7 @@ import numpy as np
 from ..data.dataset import FrameSet
 from ..model.wavenet import WaveNetLite
 from .metrics import detection_at_false_alarm, roc_auc
-from .score import calibrate_threshold, frame_nll_scores
+from .score import frame_nll_scores
 
 __all__ = ["AnomalyReport", "evaluate_anomaly"]
 

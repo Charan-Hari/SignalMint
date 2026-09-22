@@ -44,8 +44,7 @@ See [docs/thesis.md](docs/thesis.md) for the full positioning and target market.
 - [Results](#results)
 - [Quickstart (30 seconds)](#quickstart-30-seconds)
 - [How it works](#how-it-works)
-- [Full pipeline](#full-pipeline)
-- [Project structure](#project-structure)
+- [Install as a package](#install-as-a-package)
 - [Target tier](#target-tier)
 - [Status](#status)
 
@@ -117,7 +116,8 @@ same computation runs as a bounded-memory streaming pass on a microcontroller.
 The INT8 model is exported to a dependency-free **C runtime** whose integer
 arithmetic is **bit-exact** with the Python reference (verified in CI).
 
-## Full pipeline
+<details>
+<summary><b>Full pipeline (reproduce every number)</b></summary>
 
 ```bash
 python scripts/train.py         --source cwru --epochs 12       # -> artifacts/model.pt
@@ -132,7 +132,10 @@ python scripts/make_demo_gif.py --checkpoint artifacts/model.pt # docs/demo.gif
 `pip install -e .` (core) pulls only NumPy/SciPy; PyTorch is the optional `train`
 extra so the eval/runtime paths stay light.
 
-## Project structure
+</details>
+
+<details>
+<summary><b>Project structure</b></summary>
 
 ```
 signalmint/        Python package
@@ -148,6 +151,19 @@ tests/             pytest suite (incl. INT8 C parity)
 docs/              thesis, benchmarks, edge report, landing page
 notebooks/         demo.ipynb
 ```
+
+</details>
+
+## Install as a package
+
+```bash
+pip install -e ".[train]"          # editable, from source
+# or build distributables:
+python -m build                    # -> dist/signalmint-*.whl and *.tar.gz
+```
+
+Tagging a release (`git tag v0.1.0 && git push --tags`) builds the wheel/sdist and
+attaches them to a GitHub Release automatically (see `.github/workflows/release.yml`).
 
 ## Target tier
 

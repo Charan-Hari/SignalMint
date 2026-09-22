@@ -36,13 +36,13 @@ class FrameSet:
     def __len__(self) -> int:
         return int(self.symbols.shape[0])
 
-    def filter_label(self, label: int) -> "FrameSet":
+    def filter_label(self, label: int) -> FrameSet:
         """Return a new FrameSet containing only frames with the given label."""
         mask = self.labels == label
         return FrameSet(
             symbols=self.symbols[mask],
             labels=self.labels[mask],
-            names=[n for n, m in zip(self.names, mask) if m],
+            names=[n for n, m in zip(self.names, mask, strict=False) if m],
         )
 
 

@@ -15,7 +15,7 @@ from signalmint.config import DataConfig, ModelConfig, TrainConfig  # noqa: E402
 from signalmint.data.cwru import get_synthetic_records  # noqa: E402
 from signalmint.data.dataset import records_to_frames  # noqa: E402
 from signalmint.model.wavenet import WaveNetLite  # noqa: E402
-from signalmint.train import evaluate_nll, train_model  # noqa: E402
+from signalmint.train import train_model  # noqa: E402
 
 
 def _tiny_model() -> WaveNetLite:

@@ -213,7 +213,7 @@ class SignalMintConfig:
         return p
 
     @classmethod
-    def from_dict(cls, payload: dict[str, Any]) -> "SignalMintConfig":
+    def from_dict(cls, payload: dict[str, Any]) -> SignalMintConfig:
         """Rebuild a config from a nested plain-dict (inverse of :meth:`to_dict`)."""
         return cls(
             data=DataConfig(**payload.get("data", {})),
@@ -225,7 +225,7 @@ class SignalMintConfig:
         )
 
     @classmethod
-    def from_json(cls, path: str | Path) -> "SignalMintConfig":
+    def from_json(cls, path: str | Path) -> SignalMintConfig:
         """Load a config previously written with :meth:`to_json`."""
         payload = json.loads(Path(path).read_text(encoding="utf-8"))
         return cls.from_dict(payload)

@@ -1,0 +1,39 @@
+name: release
+
+# Build installable package artifacts (wheel + sdist) and attach them to a
+# GitHub Release when a version tag is pushed (e.g. `git tag v0.1.0 && git push --tags`).
+# This gives users pip-installable artifacts without needing a PyPI account.
+# To also publish to PyPI, add a job using pypa/gh-action-pypi-publish with
+# Trusted Publishing configured on PyPI.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade build
+          python -m build
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/*
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

@@ -61,21 +61,41 @@ class SignalRecord:
     source: str
 
 
-def download_cwru_file(number: int, data_dir: str | Path, force: bool = False) -> Path:
+def download_cwru_file(
+    number: int, data_dir: str | Path, force: bool = False, retries: int = 3
+) -> Path:
     """Download one numbered CWRU ``.mat`` file into ``data_dir/cwru``.
 
-    Returns the local path. Skips the download if the file already exists.
+    Returns the local path. Skips the download if the file already exists. The
+    download is retried a few times and written atomically (to a temp file that
+    is renamed on success) so an interrupted transfer never leaves a corrupt
+    ``.mat`` behind.
     """
     dest_dir = Path(data_dir) / "cwru"
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / f"{number}.mat"
     if dest.exists() and not force:
         return dest
+
     url = CWRU_BASE_URL.format(number=number)
-    with urllib.request.urlopen(url, timeout=60) as resp:  # noqa: S310 (trusted host)
-        data = resp.read()
-    dest.write_bytes(data)
-    return dest
+    last_err: Exception | None = None
+    for attempt in range(1, retries + 1):
+        try:
+            with urllib.request.urlopen(url, timeout=60) as resp:  # noqa: S310 (trusted host)
+                data = resp.read()
+            if len(data) < 1024:
+                raise OSError(f"CWRU file {number} looks truncated ({len(data)} bytes)")
+            tmp = dest.with_suffix(".mat.part")
+            tmp.write_bytes(data)
+            tmp.replace(dest)  # atomic on the same filesystem
+            return dest
+        except Exception as err:  # noqa: BLE001 - retry on any transient failure
+            last_err = err
+            if attempt == retries:
+                break
+    raise RuntimeError(
+        f"failed to download CWRU file {number} from {url} after {retries} attempts: {last_err}"
+    )
 
 
 def load_mat_drive_end(path: str | Path) -> np.ndarray:

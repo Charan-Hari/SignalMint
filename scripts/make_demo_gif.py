@@ -13,10 +13,10 @@ from __future__ import annotations
 
 import argparse
 
-import numpy as np
-
 # Headless rendering.
 import matplotlib
+import numpy as np
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.animation import FuncAnimation, PillowWriter  # noqa: E402
@@ -62,7 +62,9 @@ def main() -> int:
     # Build a timeline: healthy frames, then faulty frames.
     half = args.frames // 2
     n_idx = np.random.default_rng(0).choice(len(normal), size=min(half, len(normal)), replace=False)
-    f_idx = np.random.default_rng(1).choice(len(fault), size=min(args.frames - half, len(fault)), replace=False)
+    f_idx = np.random.default_rng(1).choice(
+        len(fault), size=min(args.frames - half, len(fault)), replace=False
+    )
     timeline = FrameSet(
         symbols=np.concatenate([normal.symbols[n_idx], fault.symbols[f_idx]], axis=0),
         labels=np.concatenate([np.zeros(len(n_idx), int), np.ones(len(f_idx), int)]),
