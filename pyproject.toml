@@ -26,7 +26,7 @@ dependencies = [
 
 [project.optional-dependencies]
 train = [
-    "torch>=2.9",
+    "torch>=2.2.0",
 ]
 viz = [
     "matplotlib>=3.8",
